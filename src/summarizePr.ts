@@ -54,6 +54,8 @@ export async function summarizePr(
       max_tokens: MAX_TOKENS,
       temperature: TEMPERATURE,
     });
+
+    console.log(`\n${response.data.choices[0].text}`);
     return response.data.choices[0].text ?? "Error: couldn't generate summary";
   } catch (error) {
     console.error(error);

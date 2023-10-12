@@ -85,7 +85,7 @@ async function getOpenAICompletion(
       .map((file: any) => formatGitDiff(file.filename, file.patch))
       .join("\n");
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-    const openAIPrompt = `${OPEN_AI_PRIMING}\n\nTHE GIT DIFF TO BE SUMMARIZED:\n\`\`\`\n${rawGitDiff}\n\`\`\`\n\nTHE SUMMERY:\n`;
+    const openAIPrompt = `${OPEN_AI_PRIMING}\n\nTHE GIT DIFF TO BE SUMMARIZED:\n\`\`\`\n${rawGitDiff}\n\`\`\`\n\nTHE SUMMARY:\n`;
 
     console.log(
       `OpenAI prompt for commit ${diffMetadata.commit.data.sha}: ${openAIPrompt}`
@@ -239,13 +239,13 @@ export async function summarizeCommits(
       console.error(error);
     }
     const comment = `GPT summary of ${headCommit}:\n\n${headCommitShaAndSummary[1]}\n\nPR summary so far:\n\n${prSummary}`;
-    // await octokit.issues.createComment({
-    //   owner: repository.owner.login,
-    //   repo: repository.name,
-    //   issue_number: pullNumber,
-    //   body: comment,
-    //   commit_id: headCommit,
-    // });
+    await octokit.issues.createComment({
+      owner: repository.owner.login,
+      repo: repository.name,
+      issue_number: pullNumber,
+      body: comment,
+      commit_id: headCommit,
+    });
   }
   return commitSummaries;
 }
