@@ -81,6 +81,7 @@ async function getOpenAICompletion(
     const diffResponse = await octokit.request(comparison.url);
 
     const rawGitDiff = diffResponse.data.files
+      .filter((file: any) => file.patch !== undefined)
       .map((file: any) => formatGitDiff(file.filename, file.patch))
       .join("\n");
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
