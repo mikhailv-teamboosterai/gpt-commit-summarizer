@@ -239,11 +239,12 @@ export async function summarizeCommits(
       console.error(error);
     }
     const comment = `GPT summary of ${headCommit}:\n\n${headCommitShaAndSummary[1]}\n\nPR summary so far:\n\n${prSummary}`;
-    await octokit.pulls.update({
+    await octokit.issues.createComment({
       owner: repository.owner.login,
       repo: repository.name,
-      pull_number: pullNumber,
-      body: pull.data.body + comment,
+      issue_number: pullNumber,
+      body: comment,
+      commit_id: headCommit,
     });
   }
   return commitSummaries;
