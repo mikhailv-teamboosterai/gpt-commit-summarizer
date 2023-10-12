@@ -186,24 +186,24 @@ export async function getFilesSummaries(
     console.log(
       `Adding comment to line ${modifiedFiles[modifiedFile].position}`
     );
-    await octokit.pulls.createReviewComment({
-      owner: repository.owner.login,
-      repo: repository.name,
-      pull_number: pullNumber,
-      commit_id: headCommitSha,
-      path: modifiedFiles[modifiedFile].filename,
-      line: Number.isFinite(modifiedFiles[modifiedFile].position)
-        ? modifiedFiles[modifiedFile].position > 0
-          ? modifiedFiles[modifiedFile].position
-          : 1
-        : 1,
-      side:
-        modifiedFiles[modifiedFile].position > 0 ||
-        modifiedFiles[modifiedFile].originSha === "None"
-          ? "RIGHT"
-          : "LEFT",
-      body: comment,
-    });
+    // await octokit.pulls.createReviewComment({
+    //   owner: repository.owner.login,
+    //   repo: repository.name,
+    //   pull_number: pullNumber,
+    //   commit_id: headCommitSha,
+    //   path: modifiedFiles[modifiedFile].filename,
+    //   line: Number.isFinite(modifiedFiles[modifiedFile].position)
+    //     ? modifiedFiles[modifiedFile].position > 0
+    //       ? modifiedFiles[modifiedFile].position
+    //       : 1
+    //     : 1,
+    //   side:
+    //     modifiedFiles[modifiedFile].position > 0 ||
+    //     modifiedFiles[modifiedFile].originSha === "None"
+    //       ? "RIGHT"
+    //       : "LEFT",
+    //   body: comment,
+    // });
     summarizedFiles += 1;
     if (summarizedFiles >= MAX_FILES_TO_SUMMARIZE) {
       break;
