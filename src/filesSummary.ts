@@ -10,6 +10,7 @@ import {
 } from "./openAi";
 import { SHARED_PROMPT } from "./sharedPrompt";
 
+const ignoreFilename = ["package-lock.json"]
 const linkRegex =
   /\[(?:[a-f0-9]{6}|None)\]\(https:\/\/github\.com\/.*?#([a-f0-9]{40}|None)\)/;
 
@@ -117,6 +118,9 @@ export async function getFilesSummaries(
     }
   > = {};
   for (const file of filesChanged.data) {
+    if (ignoreFilename.includes(file.filename)) {
+      continue;
+    }
     const originSha =
       baseCommitTree.data.tree.find((tree: any) => tree.path === file.filename)
         ?.sha ?? "None";
