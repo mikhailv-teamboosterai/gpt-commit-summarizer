@@ -58,7 +58,7 @@ export async function summarizePr(
     console.log(`\n${response.data.choices[0].text}`);
     return response.data.choices[0].text ?? "Error: couldn't generate summary";
   } catch (error) {
-    console.error(error);
+    console.error(JSON.stringify(error));
     return "Error: couldn't generate summary";
   }
 }
