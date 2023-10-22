@@ -33,7 +33,8 @@ Most commits will have less comments than this examples list.
 The last comment does not include the file names,
 because there were more than two relevant files in the hypothetical commit.
 Do not include parts of the example in your summary.
-It is given only as an example of appropriate comments.`},
+It is given only as an example of appropriate comments.`,
+  },
   {
     role: "assistant",
     content: `* Raised the amount of returned recordings from \`10\` to \`100\` [packages/server/recordings_api.ts], [packages/server/constants.ts]
@@ -203,19 +204,19 @@ export async function summarizeCommits(
       head: commit.sha,
     });
 
-    let completion = "Error: couldn't generate summary";
-    if (!isMergeCommit) {
-      completion = await getOpenAICompletion(comparison, completion, {
-        sha: commit.sha,
-        issueNumber: pullNumber,
-        repository,
-        commit: commitObject,
-      });
-    } else {
-      completion = "Not generating summary for merge commits";
-    }
+    // let completion = "Error: couldn't generate summary";
+    // if (!isMergeCommit) {
+    //   completion = await getOpenAICompletion(comparison, completion, {
+    //     sha: commit.sha,
+    //     issueNumber: pullNumber,
+    //     repository,
+    //     commit: commitObject,
+    //   });
+    // } else {
+    //   completion = "Not generating summary for merge commits";
+    // }
 
-    commitSummaries.push([commit.sha, completion]);
+    // commitSummaries.push([commit.sha, completion]);
 
     // Create a comment on the pull request with the names of the files that were modified in the commit
     // const comment = `GPT summary of ${commit.sha}:\n\n${completion}`;
