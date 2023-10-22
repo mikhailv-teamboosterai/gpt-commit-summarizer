@@ -45,11 +45,12 @@ async function getOpenAISummaryForFile(
   patch: string
 ): Promise<string> {
   try {
+    const trunkedPatch = patch.substring(0, 2000);
     const openAIPrompt: ChatCompletionRequestMessage[] = [
       ...OPEN_AI_PROMPT,
       {
         role: "user",
-        content: `THE GIT DIFF OF ${filename} TO BE SUMMARIZED: ${patch}`,
+        content: `THE GIT DIFF OF ${filename} TO BE SUMMARIZED: ${trunkedPatch}`,
       },
     ];
     console.log(`OpenAI file summary prompt for ${filename}:\n${openAIPrompt}`);
