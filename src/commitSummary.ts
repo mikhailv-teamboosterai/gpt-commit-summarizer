@@ -1,3 +1,5 @@
+import type { ChatCompletionRequestMessage } from "openai";
+
 import type { gitDiffMetadata } from "./DiffMetadata";
 import { octokit } from "./octokit";
 import {
@@ -10,8 +12,11 @@ import {
 import { SHARED_PROMPT } from "./sharedPrompt";
 import { summarizePr } from "./summarizePr";
 
-const OPEN_AI_PRIMING = `${SHARED_PROMPT}
-After the git diff of the first file, there will be an empty line, and then the git diff of the next file. 
+const OPEN_AI_PRIMING: ChatCompletionRequestMessage[] = [
+  SHARED_PROMPT,
+  {
+    role: "system",
+    content: `After the git diff of the first file, there will be an empty line, and then the git diff of the next file. 
 
 For comments that refer to 1 or 2 modified files,
 add the file names as [path/to/modified/python/file.py], [path/to/another/file.json]
@@ -24,21 +29,21 @@ Comments should be in a bullet point list, each line starting with a \`*\`.
 The summary should not include comments copied from the code.
 The output should be easily readable. When in doubt, write less comments and not more.
 Readability is top priority. Write only the most important comments about the diff.
-
-EXAMPLE SUMMARY COMMENTS:
-\`\`\`
-* Raised the amount of returned recordings from \`10\` to \`100\` [packages/server/recordings_api.ts], [packages/server/constants.ts]
-* Fixed a typo in the github action name [.github/workflows/gpt-commit-summarizer.yml]
-* Moved the \`octokit\` initialization to a separate file [src/octokit.ts], [src/index.ts]
-* Added an OpenAI API for completions [packages/utils/apis/openai.ts]
-* Lowered numeric tolerance for test files
-\`\`\`
 Most commits will have less comments than this examples list.
 The last comment does not include the file names,
 because there were more than two relevant files in the hypothetical commit.
 Do not include parts of the example in your summary.
-It is given only as an example of appropriate comments.
-`;
+It is given only as an example of appropriate comments.`},
+  {
+    role: "assistant",
+    content: `* Raised the amount of returned recordings from \`10\` to \`100\` [packages/server/recordings_api.ts], [packages/server/constants.ts]
+* Fixed a typo in the github action name [.github/workflows/gpt-commit-summarizer.yml]
+* Moved the \`octokit\` initialization to a separate file [src/octokit.ts], [src/index.ts]
+* Added an OpenAI API for completions [packages/utils/apis/openai.ts]
+* Lowered numeric tolerance for test files
+`,
+  },
+];
 
 const MAX_COMMITS_TO_SUMMARIZE = 20;
 
@@ -85,7 +90,10 @@ async function getOpenAICompletion(
       .map((file: any) => formatGitDiff(file.filename, file.patch))
       .join("\n");
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-    const openAIPrompt = `${OPEN_AI_PRIMING}\n\nTHE GIT DIFF TO BE SUMMARIZED:\n\`\`\`\n${rawGitDiff}\n\`\`\`\n\nTHE SUMMARY:\n`;
+    const openAIPrompt: ChatCompletionRequestMessage[] = [
+      ...OPEN_AI_PRIMING,
+      { role: "user", content: rawGitDiff },
+    ];
 
     console.log(
       `OpenAI prompt for commit ${diffMetadata.commit.data.sha}: ${openAIPrompt}`
@@ -95,9 +103,9 @@ async function getOpenAICompletion(
       throw new Error("OpenAI query too big");
     }
 
-    const response = await openai.createCompletion({
+    const response = await openai.createChatCompletion({
       model: MODEL_NAME,
-      prompt: openAIPrompt,
+      messages: openAIPrompt,
       max_tokens: MAX_TOKENS,
       temperature: TEMPERATURE,
     });
@@ -108,7 +116,8 @@ async function getOpenAICompletion(
     ) {
       completion = postprocessSummary(
         diffResponse.data.files.map((file: any) => file.filename),
-        response.data.choices[0].text ?? "Error: couldn't generate summary",
+        response.data.choices[0].message?.content ??
+          "Error: couldn't generate summary",
         diffMetadata
       );
     }
@@ -209,7 +218,7 @@ export async function summarizeCommits(
     commitSummaries.push([commit.sha, completion]);
 
     // Create a comment on the pull request with the names of the files that were modified in the commit
-    const comment = `GPT summary of ${commit.sha}:\n\n${completion}`;
+    // const comment = `GPT summary of ${commit.sha}:\n\n${completion}`;
 
     // if (commit.sha !== headCommit) {
     //   await octokit.issues.createComment({

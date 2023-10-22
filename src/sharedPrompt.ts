@@ -1,4 +1,8 @@
-export const SHARED_PROMPT = `You are an expert programmer, and you are trying to summarize a git diff.
+import type { ChatCompletionRequestMessage } from "openai";
+
+export const SHARED_PROMPT: ChatCompletionRequestMessage = {
+  role: "system",
+  content: `You are an expert programmer, and you are trying to summarize a git diff.
 Reminders about the git diff format:
 For every file, there are a few metadata lines, like (for example):
 \`\`\`
@@ -13,4 +17,4 @@ A line starting with \`+\` means it was added.
 A line that starting with \`-\` means that line was deleted.
 A line that starts with neither \`+\` nor \`-\` is code given for context and better understanding. 
 It is not part of the diff.
-`;
+`};

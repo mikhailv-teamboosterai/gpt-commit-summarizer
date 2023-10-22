@@ -1,4 +1,5 @@
 import type { PayloadRepository } from "@actions/github/lib/interfaces";
+import type { ChatCompletionRequestMessage } from "openai";
 
 import { octokit } from "./octokit";
 import {
@@ -23,13 +24,19 @@ export function preprocessCommitMessage(commitMessage: string): string {
   return commitMessage;
 }
 
-const OPEN_AI_PROMPT = `${SHARED_PROMPT}
+const OPEN_AI_PROMPT: ChatCompletionRequestMessage[] = [
+  SHARED_PROMPT,
+  {
+    role: "system",
+    content: `
 The following is a git diff of a single file.
 Please summarize it in a comment, describing the changes made in the diff in high level.
 Do it in the following way:
 Write \`SUMMARY:\` and then write a summary of the changes made in the diff, as a bullet point list.
 Every bullet point should start with a \`*\`.
-`;
+`,
+  },
+];
 
 const MAX_FILES_TO_SUMMARIZE = 20;
 
@@ -38,16 +45,22 @@ async function getOpenAISummaryForFile(
   patch: string
 ): Promise<string> {
   try {
-    const openAIPrompt = `${OPEN_AI_PROMPT}\n\nTHE GIT DIFF OF ${filename} TO BE SUMMARIZED:\n\`\`\`\n${patch}\n\`\`\`\n\nSUMMARY:\n`;
+    const openAIPrompt: ChatCompletionRequestMessage[] = [
+      ...OPEN_AI_PROMPT,
+      {
+        role: "user",
+        content: `THE GIT DIFF OF ${filename} TO BE SUMMARIZED: ${patch}`,
+      },
+    ];
     console.log(`OpenAI file summary prompt for ${filename}:\n${openAIPrompt}`);
 
     if (openAIPrompt.length > MAX_OPEN_AI_QUERY_LENGTH) {
       throw new Error("OpenAI query too big");
     }
 
-    const response = await openai.createCompletion({
+    const response = await openai.createChatCompletion({
       model: MODEL_NAME,
-      prompt: openAIPrompt,
+      messages: openAIPrompt,
       max_tokens: MAX_TOKENS,
       temperature: TEMPERATURE,
     });
@@ -56,7 +69,8 @@ async function getOpenAISummaryForFile(
       response.data.choices.length > 0
     ) {
       return (
-        response.data.choices[0].text ?? "Error: couldn't generate summary"
+        response.data.choices[0].message?.content ??
+        "Error: couldn't generate summary"
       );
     }
   } catch (error) {
@@ -100,7 +114,7 @@ export async function getFilesSummaries(
     pull_number: pullNumber,
   });
   const baseCommitSha = pullRequest.data.base.sha;
-  const headCommitSha = pullRequest.data.head.sha;
+  // const headCommitSha = pullRequest.data.head.sha;
   const baseCommitTree = await octokit.git.getTree({
     owner: repository.owner.login,
     repo: repository.name,
@@ -176,20 +190,20 @@ export async function getFilesSummaries(
       modifiedFiles[modifiedFile].diff
     );
     result[modifiedFile] = fileAnalysisAndSummary;
-    const comment = `GPT summary of [${modifiedFiles[
-      modifiedFile
-    ].originSha.slice(0, 6)}](https://github.com/${repository.owner.login}/${
-      repository.name
-    }/blob/${baseCommitSha}/${modifiedFile}#${
-      modifiedFiles[modifiedFile].originSha
-    }) - [${modifiedFiles[modifiedFile].sha.slice(0, 6)}](https://github.com/${
-      repository.owner.login
-    }/${repository.name}/blob/${headCommitSha}/${modifiedFile}#${
-      modifiedFiles[modifiedFile].sha
-    }):\n${fileAnalysisAndSummary}`;
-    console.log(
-      `Adding comment to line ${modifiedFiles[modifiedFile].position}`
-    );
+    // const comment = `GPT summary of [${modifiedFiles[
+    //   modifiedFile
+    // ].originSha.slice(0, 6)}](https://github.com/${repository.owner.login}/${
+    //   repository.name
+    // }/blob/${baseCommitSha}/${modifiedFile}#${
+    //   modifiedFiles[modifiedFile].originSha
+    // }) - [${modifiedFiles[modifiedFile].sha.slice(0, 6)}](https://github.com/${
+    //   repository.owner.login
+    // }/${repository.name}/blob/${headCommitSha}/${modifiedFile}#${
+    //   modifiedFiles[modifiedFile].sha
+    // }):\n${fileAnalysisAndSummary}`;
+    // console.log(
+    //   `Adding comment to line ${modifiedFiles[modifiedFile].position}`
+    // );
     // await octokit.pulls.createReviewComment({
     //   owner: repository.owner.login,
     //   repo: repository.name,
