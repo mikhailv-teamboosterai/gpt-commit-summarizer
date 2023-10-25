@@ -53,7 +53,7 @@ async function getOpenAISummaryForFile(
         content: `THE GIT DIFF OF ${filename} TO BE SUMMARIZED: ${trunkedPatch}`,
       },
     ];
-    console.log(`OpenAI file summary prompt for ${filename}:\n${openAIPrompt}`);
+    console.log(`OpenAI file summary prompt for ${filename}:\n${JSON.stringify(openAIPrompt)}`);
 
     if (openAIPrompt.length > MAX_OPEN_AI_QUERY_LENGTH) {
       throw new Error("OpenAI query too big");
