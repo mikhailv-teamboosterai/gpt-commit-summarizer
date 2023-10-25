@@ -204,22 +204,22 @@ export async function summarizeCommits(
       head: commit.sha,
     });
 
-    // let completion = "Error: couldn't generate summary";
-    // if (!isMergeCommit) {
-    //   completion = await getOpenAICompletion(comparison, completion, {
-    //     sha: commit.sha,
-    //     issueNumber: pullNumber,
-    //     repository,
-    //     commit: commitObject,
-    //   });
-    // } else {
-    //   completion = "Not generating summary for merge commits";
-    // }
+    let completion = "Error: couldn't generate summary";
+    if (!isMergeCommit) {
+      completion = await getOpenAICompletion(comparison, completion, {
+        sha: commit.sha,
+        issueNumber: pullNumber,
+        repository,
+        commit: commitObject,
+      });
+    } else {
+      completion = "Not generating summary for merge commits";
+    }
 
-    // commitSummaries.push([commit.sha, completion]);
+    commitSummaries.push([commit.sha, completion]);
 
     // Create a comment on the pull request with the names of the files that were modified in the commit
-    // const comment = `GPT summary of ${commit.sha}:\n\n${completion}`;
+    const comment = `GPT summary of ${commit.sha}:\n\n${completion}`;
 
     // if (commit.sha !== headCommit) {
     //   await octokit.issues.createComment({
